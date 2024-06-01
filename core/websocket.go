@@ -3,6 +3,7 @@ package core
 import (
 	"ShopService/helpers"
 	"ShopService/models"
+	"ShopService/schemas"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -24,7 +25,7 @@ type Message struct {
 
 type Connection struct {
 	WSConn *websocket.Conn
-	User   *models.User
+	User   *schemas.UserResponse
 }
 
 func (client *Connection) broadcast(msg Message, chat *Chat) {
@@ -69,7 +70,8 @@ func getUserConnection(w http.ResponseWriter, r *http.Request) *Connection {
 		panic(err.Error())
 	}
 	wsConn, _ := upgrader.Upgrade(w, r, nil)
-	return &Connection{wsConn, &claims.User}
+	userClaim := &claims.User
+	return &Connection{wsConn, userClaim.ConvertPayloadToUserResponse()}
 }
 
 func chatHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +145,7 @@ func connectToWebSocket(url string) (*websocket.Conn, error) {
 }
 
 type Payload struct {
-	User  models.User
+	User  schemas.UserResponse
 	Data  interface{}
 	Event string
 }
@@ -160,7 +162,8 @@ func sendDataToWebSocket(conn *websocket.Conn, data Payload) error {
 }
 
 func SendToWs(route string, payload Payload) {
-	token, err0 := GenerateJWT(payload.User, false)
+	userPayload := payload.User.ToTokenPayload()
+	token, err0 := GenerateJWT(*userPayload, false)
 	if err0 != nil {
 		panic(err0.Error())
 	}

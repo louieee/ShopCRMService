@@ -5,9 +5,9 @@ import (
 )
 
 type APISuccess struct {
-	Message *string `json:"message"`
-	Data    *any    `json:"data"`
-	Status  *int    `json:"status"`
+	Message *string     `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+	Status  *int        `json:"status"`
 }
 
 type APIFailure struct {
@@ -25,14 +25,8 @@ func IntPtr(value int) *int {
 	return &value
 }
 
-func FailureResponse(context *gin.Context, error APIFailure) {
-	if error.Status == nil {
-		error.Status = IntPtr(400)
-	}
-	if error.Message == nil {
-		error.Message = StrPtr("An Error Occurred")
-	}
-	context.JSON(*error.Status, gin.H{"message": *error.Message})
+func FailureResponse(context *gin.Context, error CustomError) {
+	context.JSON(error.Status, gin.H{"message": error.Detail})
 	context.Abort()
 }
 
@@ -47,5 +41,5 @@ func SuccessResponse(context *gin.Context, response APISuccess) {
 		response.Data = AnyPtr(map[string]string{})
 	}
 	context.JSON(*response.Status, gin.H{"message": *response.Message,
-		"data": *response.Data})
+		"data": response.Data})
 }

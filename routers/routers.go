@@ -13,28 +13,55 @@ func Routes(router *gin.Engine, db *gorm.DB) {
 	// Define a route for getting a user
 	baseRoute := router.Group("/api/v1/")
 	allControllers := controllers.NewController(db)
-
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	shopRoutes(baseRoute.Group("shops"), allControllers)
+	companyRoutes(baseRoute.Group("crm/companies"), allControllers)
+	contactRoutes(baseRoute.Group("crm/contacts"), allControllers)
+	leadRoutes(baseRoute.Group("crm/leads"), allControllers)
 	userRoutes(baseRoute.Group("users"), allControllers)
-	authRoutes(baseRoute.Group("auth"), allControllers)
 }
 
 func userRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
-	router.POST("/", controllers.RegisterUser)
-	securedRoutes := router.Use(core.Auth())
+	corsRoutes := router.Use(core.CORSMiddleware())
+	corsRoutes.POST("/", controllers.RegisterUser)
+	securedRoutes := corsRoutes.Use(core.Auth())
 	securedRoutes.GET("/", controllers.GetUser)
 
 }
-func shopRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
-	router.GET("/:id", controllers.GetShop)
 
+func contactRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
+	securedRoutes := router.Use(core.Auth(), core.CORSMiddleware())
+	//securedRoutes := router
+	securedRoutes.PUT("/:contact_id", controllers.UpdateContact)
+	securedRoutes.GET("/", controllers.ContactList)
+	securedRoutes.POST("/", controllers.CreateContact)
+	securedRoutes.DELETE("/:contact_id", controllers.DeleteContact)
+	securedRoutes.GET("/:contact_id", controllers.RetrieveContact)
 }
 
-func authRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
-	//securedRoutes := router.Use(core.Auth())
-	//securedRoutes.POST("/login", controllers.GetUser)
-	router.POST("/login", controllers.LoginAPI)
-	router.POST("/accessToken", controllers.GetAccessTokenAPI)
-
+func leadRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
+	securedRoutes := router.Use(core.Auth(), core.CORSMiddleware())
+	//securedRoutes := router
+	securedRoutes.PUT("/:lead_id", controllers.UpdateLead)
+	securedRoutes.GET("/", controllers.LeadList)
+	securedRoutes.POST("/", controllers.CreateLead)
+	securedRoutes.DELETE("/:lead_id", controllers.DeleteLead)
+	securedRoutes.GET("/:lead_id", controllers.RetrieveLead)
 }
+
+func companyRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
+	securedRoutes := router.Use(core.Auth(), core.CORSMiddleware())
+	//securedRoutes := router
+	securedRoutes.PUT("/:company_id", controllers.UpdateCompany)
+	securedRoutes.GET("/", controllers.CompanyList)
+	securedRoutes.POST("/", controllers.CreateCompany)
+	securedRoutes.DELETE("/:company_id", controllers.DeleteCompany)
+	securedRoutes.GET("/:company_id", controllers.RetrieveCompany)
+}
+
+//func authRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
+//	//securedRoutes := router.Use(core.Auth())
+//	//securedRoutes.POST("/login", controllers.GetUser)
+//	router.POST("/login", controllers.LoginAPI)
+//	router.POST("/accessToken", controllers.GetAccessTokenAPI)
+//
+//}

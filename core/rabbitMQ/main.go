@@ -7,6 +7,9 @@ import (
 	"github.com/streadway/amqp"
 )
 
+type PayloadString struct {
+	Message string
+}
 type Task struct {
 	Function string
 	Args     []string
@@ -103,6 +106,66 @@ func (server Server) Consume(queue string) {
 		}
 		// process task and store its result
 		server.processPayload(queue, payload)
+		println("received: ", payload.Msg)
+		err2 := msg.Ack(false)
+		if err2 != nil {
+			panic("Error Acknowledging task")
+		}
+	}
+}
+func (server Server) ConsumeTask() {
+	ch, _ := server.connection.Channel()
+	err := ch.ExchangeDeclarePassive(
+		"business",
+		"fanout",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		panic(err)
+		return
+	}
+	q, _ := ch.QueueDeclarePassive(
+		"task", // name
+		true,   // durable
+		false,  // delete when unused
+		false,  // exclusive
+		false,  // no-wait
+		nil,    // arguments
+	)
+	err = ch.QueueBind(
+		"task",
+		"",
+		"business",
+		false, nil)
+	if err != nil {
+		panic(err)
+		return
+	}
+	msgs, _ := ch.Consume(
+		q.Name, // queue
+		"",     // consumer
+		false,  // auto ack
+		false,  // exclusive
+		false,  // no local
+		false,  // no wait
+		nil,    // args
+	)
+
+	for {
+		msg := <-msgs
+		var payload PayloadString
+		err1 := json.Unmarshal(msg.Body, &payload)
+		if err1 != nil {
+			//msg.Ack(false)
+			panic(fmt.Sprintf("Error unwrapping message: %s", err1.Error()))
+			//return
+		}
+		println("received: ", payload.Message)
+		// process task and store its result
 		err2 := msg.Ack(false)
 		if err2 != nil {
 			panic("Error Acknowledging task")
@@ -129,6 +192,8 @@ func (server Server) processPayload(queue string, msg Payload) {
 		function(msgData)
 		res := server.RetrieveMessage(fmt.Sprintf("product.%s", msgData.ID))
 		println("The result is ", res)
+	default:
+		println("The message", msg.Msg)
 	}
 
 }

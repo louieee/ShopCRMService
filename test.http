@@ -1,0 +1,35 @@
+###
+
+# curl -X 'POST'
+#  'http://localhost:8080/api/v1/leads'
+#  -H 'accept: application/json'
+#  -H 'Content-Type: application/json'
+#  -d '{
+#  "budget": 0,
+#  "budget_currency": "usd",
+#  "company_id": 0,
+#  "contact_id": 0,
+#  "conversion_date": "string",
+#  "interest_level": 0,
+#  "is_deal": true,
+#  "nurturing_status": "New Lead",
+#  "source": "Website Form"
+#}'
+POST http://localhost:8080/api/v1/crm/leads
+accept: application/json
+Content-Type: application/json
+
+{
+  "budget": 0,
+  "budget_currency": "usd",
+  "company_id": 0,
+  "contact_id": 0,
+  "conversion_date": "string",
+  "interest_level": 0,
+  "is_deal": true,
+  "nurturing_status": "New Lead",
+  "source": "Website Form"
+}
+
+###
+

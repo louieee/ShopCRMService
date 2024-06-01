@@ -18,6 +18,6 @@ func GetDB() *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&models.User{}, &models.Shop{})
+	db.AutoMigrate(&models.User{}, &models.Lead{}, &models.Contact{}, &models.Company{})
 	return db
 }

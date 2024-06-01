@@ -1,11 +1,178 @@
 basePath: /api/v1
 definitions:
-  controllers.AccessTokenRequest:
+  helpers.APIFailure:
+    properties:
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.BasicUserDataType:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      username:
+        type: string
+    type: object
+  schemas.AccessTokenRequest:
     properties:
       refreshToken:
         type: string
     type: object
-  controllers.CreateUserRequest:
+  schemas.CompanyItem:
+    properties:
+      id:
+        type: integer
+      industry:
+        type: string
+      name:
+        type: string
+      size:
+        type: string
+    type: object
+  schemas.CompanyListResponse:
+    properties:
+      count:
+        type: integer
+      results:
+        items:
+          $ref: '#/definitions/schemas.CompanySchema'
+        type: array
+    type: object
+  schemas.CompanySchema:
+    properties:
+      id:
+        type: integer
+      industry:
+        type: string
+      name:
+        type: string
+    type: object
+  schemas.ContactResponse:
+    properties:
+      address:
+        type: string
+      age:
+        type: integer
+      city:
+        type: string
+      country:
+        type: string
+      email:
+        type: string
+      gender:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      owner_id:
+        type: integer
+      phone_number:
+        type: string
+      state:
+        type: string
+    type: object
+  schemas.CreateCompany:
+    properties:
+      industry:
+        type: string
+      name:
+        type: string
+      size:
+        type: string
+    type: object
+  schemas.CreateContact:
+    properties:
+      address:
+        type: string
+      age:
+        type: integer
+      city:
+        type: string
+      country:
+        type: string
+      email:
+        type: string
+      gender:
+        type: string
+      name:
+        type: string
+      owner_id:
+        type: integer
+      phone_number:
+        type: string
+      state:
+        type: string
+    type: object
+  schemas.CreateLead:
+    properties:
+      budget:
+        type: number
+      budget_currency:
+        enum:
+        - usd
+        - ngn
+        - gbp
+        type: string
+      company_id:
+        minimum: 1
+        type: integer
+      contact_id:
+        minimum: 1
+        type: integer
+      conversion_date:
+        default: "2020-01-02T15:04:05Z"
+        type: string
+      description:
+        minLength: 3
+        type: string
+      interest_level:
+        type: integer
+      is_deal:
+        default: false
+        type: boolean
+      nurturing_status:
+        enum:
+        - New Lead
+        - ' Engaged Lead'
+        - ' Contacted Lead'
+        - ' Qualified Lead'
+        - ' Proposal Sent'
+        - ' Negotiating'
+        - ' Pending Contract/Agreement'
+        - ' Closed - Won'
+        - ' Closed - Lost'
+        - ' On Hold'
+        - ' Re-Engagement'
+        type: string
+      purchase_timeline:
+        default: "2020-01-02T15:04:05Z"
+        description: ProductIDs       []uint    `json:"product_ids"`
+        type: string
+      source:
+        enum:
+        - Website Form
+        - ' Social Media'
+        - ' Email Campaign'
+        - ' Referral'
+        - ' Event'
+        - ' Cold Call'
+        - ' Content Marketing'
+        - ' Advertisement'
+        - ' Networking'
+        - ' Trade Show'
+        - ' Word of Mouth'
+        type: string
+      title:
+        minLength: 3
+        type: string
+    type: object
+  schemas.CreateUserRequest:
     properties:
       email:
         type: string
@@ -16,28 +183,60 @@ definitions:
       username:
         type: string
     type: object
-  controllers.LoginRequest:
+  schemas.LeadResponse:
+    properties:
+      budget:
+        type: number
+      budget_currency:
+        type: string
+      company:
+        type: string
+      company_id:
+        type: integer
+      contact:
+        type: string
+      contact_id:
+        type: integer
+      conversion_date:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      interest_level:
+        type: integer
+      is_deal:
+        type: boolean
+      nurturing_status:
+        type: string
+      owner:
+        type: string
+      owner_id:
+        type: integer
+      purchase_timeline:
+        type: string
+      source:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  schemas.LoginRequest:
     properties:
       email:
         type: string
       password:
         type: string
     type: object
-  controllers.TokenResponse:
+  schemas.TokenResponse:
     properties:
       accessToken:
         type: string
       refreshToken:
         type: string
     type: object
-  helpers.APIFailure:
-    properties:
-      message:
-        type: string
-      status:
-        type: integer
-    type: object
-  models.BasicUserDataType:
+  schemas.UserResponse:
     properties:
       email:
         type: string
@@ -67,12 +266,20 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.AccessTokenRequest'
+          $ref: '#/definitions/schemas.AccessTokenRequest'
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.TokenResponse'
+            $ref: '#/definitions/schemas.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
       summary: allows a user to get a new access token from your refresh token
       tags:
       - auth
@@ -84,15 +291,548 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.LoginRequest'
+          $ref: '#/definitions/schemas.LoginRequest'
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controllers.TokenResponse'
+            $ref: '#/definitions/schemas.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
       summary: allows a user to login
       tags:
       - auth
+  /crm/companies:
+    post:
+      parameters:
+      - description: company
+        in: body
+        name: company
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateCompany'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.CompanyItem'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: creates a company
+      tags:
+      - companies
+  /crm/companies/:
+    get:
+      parameters:
+      - in: query
+        name: industry
+        type: string
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - default: 10
+        in: query
+        minimum: 1
+        name: page_size
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/schemas.CompanyListResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: retrieves the list of companies
+      tags:
+      - companies
+  /crm/companies/{company_id}:
+    delete:
+      parameters:
+      - description: Company Id
+        in: path
+        name: company_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: deletes a company
+      tags:
+      - companies
+    get:
+      parameters:
+      - description: company id
+        in: path
+        name: company_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.CompanyItem'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: retrieves a company
+      tags:
+      - companies
+    put:
+      parameters:
+      - description: Company Id
+        in: path
+        name: company_id
+        required: true
+        type: integer
+      - description: Company
+        in: body
+        name: company
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateCompany'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.CompanyItem'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: updates a company details
+      tags:
+      - companies
+  /crm/contacts:
+    get:
+      parameters:
+      - in: query
+        name: country
+        type: string
+      - in: query
+        minimum: 18
+        name: end_age
+        type: integer
+      - in: query
+        name: gender
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: owner_ids
+        type: array
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - default: 10
+        in: query
+        minimum: 1
+        name: page_size
+        required: true
+        type: integer
+      - in: query
+        minimum: 18
+        name: start_age
+        type: integer
+      - in: query
+        name: state
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/schemas.ContactResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: retrieves the list of contacts
+      tags:
+      - contacts
+  /crm/contacts/:
+    post:
+      parameters:
+      - description: contact
+        in: body
+        name: contact
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateContact'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.ContactResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: creates a contact
+      tags:
+      - contacts
+  /crm/contacts/{contact_id}:
+    delete:
+      parameters:
+      - description: contact id
+        in: path
+        name: contact_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: deletes a contact
+      tags:
+      - contacts
+    get:
+      parameters:
+      - description: contact id
+        in: path
+        name: contact_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ContactResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: retrieves a contact
+      tags:
+      - contacts
+    put:
+      parameters:
+      - description: contact
+        in: body
+        name: contact
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateContact'
+      - description: contact id
+        in: path
+        name: contact_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.ContactResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: updates a contact
+      tags:
+      - contacts
+  /crm/leads:
+    post:
+      parameters:
+      - description: lead
+        in: body
+        name: lead
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateLead'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.LeadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: creates a lead
+      tags:
+      - leads
+  /crm/leads/:
+    get:
+      parameters:
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: company_ids
+        type: array
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: contact_ids
+        type: array
+      - default: "2006-01-02T15:04:05Z"
+        in: query
+        name: end_conversion_date
+        type: string
+      - default: "2006-01-02T15:04:05Z"
+        in: query
+        name: end_purchase_timeline
+        type: string
+      - default: 0
+        in: query
+        minimum: 0
+        name: interest_level
+        type: integer
+      - in: query
+        name: is_deal
+        type: boolean
+      - collectionFormat: csv
+        in: query
+        items:
+          enum:
+          - New Lead
+          - ' Engaged Lead'
+          - ' Contacted Lead'
+          - ' Qualified Lead'
+          - ' Proposal Sent'
+          - ' Negotiating'
+          - ' Pending Contract/Agreement'
+          - ' Closed - Won'
+          - ' Closed - Lost'
+          - ' On Hold'
+          - ' Re-Engagement'
+          type: string
+        name: nurturing_statuses
+        type: array
+      - collectionFormat: csv
+        in: query
+        items:
+          type: integer
+        name: owner_ids
+        type: array
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - default: 10
+        in: query
+        minimum: 1
+        name: page_size
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: string
+        name: sources
+        type: array
+      - default: "2006-01-02T15:04:05Z"
+        in: query
+        name: start_conversion_date
+        type: string
+      - default: "2006-01-02T15:04:05Z"
+        description: filters by purchase time
+        in: query
+        name: start_purchase_timeline
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/schemas.LeadResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: retrieves all lead
+      tags:
+      - leads
+  /crm/leads/{lead_id}:
+    delete:
+      parameters:
+      - description: lead id
+        in: path
+        name: lead_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: deletes a lead
+      tags:
+      - leads
+    get:
+      parameters:
+      - description: lead
+        in: path
+        name: lead_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.LeadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: retrieves a lead
+      tags:
+      - leads
+    put:
+      parameters:
+      - description: lead
+        in: body
+        name: lead
+        required: true
+        schema:
+          $ref: '#/definitions/schemas.CreateLead'
+      - description: lead id
+        in: path
+        name: lead_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/schemas.LeadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+      summary: updates a lead
+      tags:
+      - leads
   /users/:
     get:
       produces:
@@ -120,8 +860,22 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/controllers.CreateUserRequest'
-      responses: {}
+          $ref: '#/definitions/schemas.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/schemas.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/helpers.APIFailure'
       summary: creates a user
       tags:
       - users

@@ -1,7 +1,7 @@
 package core
 
 import (
-	"ShopService/models"
+	"ShopService/schemas"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"time"
@@ -9,24 +9,25 @@ import (
 
 var accessKey = []byte(JWTConfig["ACCESS_KEY"])
 var refreshKey = []byte(JWTConfig["REFRESH_KEY"])
+var issuer = "sales-app"
 
 type JWTClaim struct {
-	User models.User
+	User schemas.TokenUserPayload
 	jwt.StandardClaims
 }
 
-func GenerateJWT(user models.User, refreshToken bool) (tokenString string, err error) {
+func GenerateJWT(user schemas.TokenUserPayload, refreshToken bool) (tokenString string, err error) {
 	var expirationTime time.Time
 	if refreshToken {
 		expirationTime = time.Now().Add(48 * time.Hour)
 	} else {
 		expirationTime = time.Now().Add(1 * time.Hour)
 	}
-
 	claims := &JWTClaim{
 		User: user,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
+			Issuer:    issuer,
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -44,16 +45,22 @@ func ValidateAccessToken(signedToken string) (*JWTClaim, error) {
 		signedToken,
 		&JWTClaim{},
 		func(token *jwt.Token) (interface{}, error) {
+
 			return accessKey, nil
 		},
 	)
 	if err != nil {
+		println("Error: ", err.Error())
 		err = errors.New("token is invalid")
 		return nil, err
 	}
 	claims, ok := token.Claims.(*JWTClaim)
 	if !ok {
 		err = errors.New("couldn't parse claims")
+		return nil, err
+	}
+	if claims.Issuer != issuer {
+		err = errors.New("this issuer is invalid")
 		return nil, err
 	}
 	if claims.ExpiresAt < time.Now().Local().Unix() {
@@ -80,6 +87,11 @@ func ValidateRefreshToken(signedToken string) (error, *JWTClaim) {
 	claims, ok := token.Claims.(*JWTClaim)
 	if !ok {
 		err = errors.New("couldn't parse claims")
+		return err, nil
+	}
+	if claims.Issuer != issuer {
+		err = errors.New("this issuer is invalid")
+		return err, nil
 	}
 	if claims.ExpiresAt < time.Now().Local().Unix() {
 		err = errors.New("refresh token is expired. Please Login")

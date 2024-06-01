@@ -46,7 +46,8 @@ func main() {
 	case "rabbitMQ":
 		rabbitMQServer()
 	default:
-		runGoServer()
+		//runGoServer()
+		rabbitMQServer()
 	}
 }
 
@@ -62,7 +63,7 @@ func runGoServer() {
 	}(db)
 
 	// Start the server
-	port := 8080
+	port := core.ServerConfig["PORT"]
 	fmt.Printf("Server is running on :%d\n", port)
 	err := router.Run(fmt.Sprintf(":%d", port))
 	if err != nil {
@@ -73,6 +74,7 @@ func runGoServer() {
 func rabbitMQServer() {
 	server := rabbitMQ.RabbitMQServer
 	server = server.Connect()
+	println("connected to rabbit mq")
 
 	//task := rabbitMQ.Message{
 	//	Queue: "task_queue", Payload: rabbitMQ.Payload{
@@ -101,5 +103,5 @@ func rabbitMQServer() {
 		},
 	}
 	server.Publish(product)
-	server.Consume("product_queue")
+	server.ConsumeTask()
 }
