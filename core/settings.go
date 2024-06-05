@@ -1,17 +1,25 @@
 package core
 
+import (
+	"github.com/joho/godotenv"
+	"os"
+	"strconv"
+)
+
+var _ = godotenv.Load()
+
 var DBConfig map[string]string = map[string]string{
-	"HOST":     "localhost",
-	"PORT":     "5432",
-	"USER":     "postgres",
-	"PASSWORD": "MONKEYSex",
-	"NAME":     "CRM-DB",
+	"HOST":     os.Getenv("DB_HOST"),
+	"PORT":     os.Getenv("DB_PORT"),
+	"USER":     os.Getenv("DB_USER"),
+	"PASSWORD": os.Getenv("DB_PASSWORD"),
+	"NAME":     os.Getenv("DATABASE"),
 	"SSL_MODE": "disable",
 }
 
 var JWTConfig map[string]string = map[string]string{
-	"ACCESS_KEY":  "asdklkgfdsasdjklkjgfdsdlkgfdsdklkfdslkjhgfdskjhgfd",
-	"REFRESH_KEY": "asdklkgfdsasdjklkjgfdsdlkgfdsdklkfdslkjhgfdskjhgfd",
+	"ACCESS_KEY":  os.Getenv("JWT_ACCESS_KEY"),
+	"REFRESH_KEY": os.Getenv("JWT_REFRESH_KEY"),
 }
 
 var CORSConfig map[string]any = map[string]any{
@@ -29,6 +37,7 @@ var CORSConfig map[string]any = map[string]any{
 	},
 }
 
+var serverPort, _ = strconv.Atoi(os.Getenv("SERVER_PORT"))
 var ServerConfig map[string]any = map[string]any{
-	"PORT": 8080,
+	"PORT": serverPort,
 }

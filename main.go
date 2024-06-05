@@ -11,6 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/joho/godotenv"
+	"log"
+	"os"
 )
 
 // @title           Shop Service
@@ -29,6 +32,10 @@ import (
 // @BasePath  /api/v1
 // @Security Bearer
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
 	//appType := os.Getenv("APP_TYPE")
 	var appType string
 	// Register flags
@@ -46,8 +53,9 @@ func main() {
 	case "rabbitMQ":
 		rabbitMQServer()
 	default:
-		//runGoServer()
 		rabbitMQServer()
+		runGoServer()
+
 	}
 }
 
@@ -72,8 +80,12 @@ func runGoServer() {
 }
 
 func rabbitMQServer() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
 	server := rabbitMQ.RabbitMQServer
-	server = server.Connect()
+	server = server.Connect(os.Getenv("RABBIT_MQ_HOST"), os.Getenv("REDIS_URL"))
 	println("connected to rabbit mq")
 
 	//task := rabbitMQ.Message{
@@ -91,17 +103,6 @@ func rabbitMQServer() {
 	//		Msg:      "Hello Rabbit MQ Server",
 	//	},
 	//}
-	product := rabbitMQ.Message{
-		Queue: "product_queue", Payload: rabbitMQ.Payload{
-			Msg:      "add",
-			DataType: "Product",
-			Product: rabbitMQ.Product{
-				ID:       "#ERTY",
-				Name:     "Box",
-				Quantity: 5,
-			},
-		},
-	}
-	server.Publish(product)
-	server.ConsumeTask()
+	server.Consume()
+	//server.ChatConsume()
 }
