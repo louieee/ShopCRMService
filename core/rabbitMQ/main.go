@@ -1,11 +1,13 @@
 package rabbitMQ
 
 import (
+	"ShopService/core/rabbitMQ/consumers"
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis"
 	_ "github.com/joho/godotenv"
 	"github.com/streadway/amqp"
+	"strings"
 )
 
 type Payload struct {
@@ -52,11 +54,16 @@ func (consumer Consumer) Consume(ch *amqp.Channel) {
 }
 
 func (consumer Consumer) HandleMessage(message Payload) {
+	data := strings.ReplaceAll(message.Data, `'`, `"`)
 	switch consumer.queue {
 	case "crm_queue":
-		println(fmt.Sprintf("[Y] %s", message.Data))
+		switch message.DataType {
+		case "lead":
+			consumers.HandleLead(message.Action, message.Data)
+		}
+		println(fmt.Sprintf("[Y] %s", data))
 	default:
-		println(fmt.Sprintf("[X] %s", message.Data))
+		println(fmt.Sprintf("[X] %s", data))
 
 	}
 }
