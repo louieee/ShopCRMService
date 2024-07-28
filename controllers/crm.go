@@ -22,14 +22,14 @@ import (
 // @Failure      400  {object}  helpers.APIFailure
 // @Failure      404  {object} helpers.APIFailure
 func (dc *DBController) CreateLead(c *gin.Context) {
-	//authUser, _ := c.Get("user")
-	//user := authUser.(models.User)
+	authUser, _ := c.Get("user")
+	user := authUser.(schemas.UserResponse)
 	var lead models.Lead
 	if err := c.ShouldBindJSON(&lead); err != nil {
 		helpers.FailureResponse(c, *helpers.ValidationError(err.Error()))
 		return
 	}
-	lead.OwnerID = 1
+	lead.OwnerID = user.UserId
 	createdLead, err := repositories.CreateLead(dc.DB, lead)
 	if err != nil {
 		helpers.FailureResponse(c, *err)

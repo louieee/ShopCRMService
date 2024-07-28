@@ -18,13 +18,14 @@ func Routes(router *gin.Engine, db *gorm.DB) {
 	contactRoutes(baseRoute.Group("crm/contacts"), allControllers)
 	leadRoutes(baseRoute.Group("crm/leads"), allControllers)
 	userRoutes(baseRoute.Group("users"), allControllers)
+	authRoutes(baseRoute.Group("auth"), allControllers)
 }
 
 func userRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
 	corsRoutes := router.Use(core.CORSMiddleware())
-	corsRoutes.POST("/", controllers.RegisterUser)
 	securedRoutes := corsRoutes.Use(core.Auth())
-	securedRoutes.GET("/", controllers.GetUser)
+	securedRoutes.GET("/me", controllers.GetUser)
+	securedRoutes.GET("/", controllers.GetUserList)
 
 }
 
@@ -58,10 +59,7 @@ func companyRoutes(router *gin.RouterGroup, controllers *controllers.DBControlle
 	securedRoutes.GET("/:company_id", controllers.RetrieveCompany)
 }
 
-//func authRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
-//	//securedRoutes := router.Use(core.Auth())
-//	//securedRoutes.POST("/login", controllers.GetUser)
-//	router.POST("/login", controllers.LoginAPI)
-//	router.POST("/accessToken", controllers.GetAccessTokenAPI)
-//
-//}
+func authRoutes(router *gin.RouterGroup, controllers *controllers.DBController) {
+	router.POST("/accessToken", controllers.GetAccessTokenAPI)
+
+}

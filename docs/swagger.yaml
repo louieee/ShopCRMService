@@ -7,17 +7,6 @@ definitions:
       status:
         type: integer
     type: object
-  models.BasicUserDataType:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      username:
-        type: string
-    type: object
   schemas.AccessTokenRequest:
     properties:
       refreshToken:
@@ -172,17 +161,6 @@ definitions:
         minLength: 3
         type: string
     type: object
-  schemas.CreateUserRequest:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-      username:
-        type: string
-    type: object
   schemas.LeadResponse:
     properties:
       budget:
@@ -222,13 +200,6 @@ definitions:
       updatedAt:
         type: string
     type: object
-  schemas.LoginRequest:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    type: object
   schemas.TokenResponse:
     properties:
       accessToken:
@@ -244,7 +215,9 @@ definitions:
         type: integer
       name:
         type: string
-      username:
+      user_id:
+        type: integer
+      user_type:
         type: string
     type: object
 host: localhost:8080
@@ -281,31 +254,6 @@ paths:
           schema:
             $ref: '#/definitions/helpers.APIFailure'
       summary: allows a user to get a new access token from your refresh token
-      tags:
-      - auth
-  /auth/login/:
-    post:
-      parameters:
-      - description: Login Credential
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/schemas.LoginRequest'
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/schemas.TokenResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/helpers.APIFailure'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/helpers.APIFailure'
-      summary: allows a user to login
       tags:
       - auth
   /crm/companies:
@@ -835,13 +783,34 @@ paths:
       - leads
   /users/:
     get:
+      parameters:
+      - default: 1
+        in: query
+        minimum: 1
+        name: page
+        required: true
+        type: integer
+      - default: 10
+        in: query
+        minimum: 1
+        name: page_size
+        required: true
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - in: query
+        name: user_type
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.BasicUserDataType'
+            items:
+              $ref: '#/definitions/schemas.UserResponse'
+            type: array
         "400":
           description: Bad Request
           schema:
@@ -850,22 +819,16 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/helpers.APIFailure'
-      summary: retrieves a user
+      summary: retrieves all users
       tags:
       - users
-    post:
-      parameters:
-      - description: user
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/schemas.CreateUserRequest'
+  /users/me:
+    get:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
             $ref: '#/definitions/schemas.UserResponse'
         "400":
@@ -876,7 +839,7 @@ paths:
           description: Not Found
           schema:
             $ref: '#/definitions/helpers.APIFailure'
-      summary: creates a user
+      summary: retrieves a user
       tags:
       - users
 security:

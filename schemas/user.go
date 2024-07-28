@@ -32,6 +32,7 @@ type UserResponse struct {
 	Name     string `json:"name"`
 	Email    string `json:"email" gorm:"unique"`
 	UserType string `json:"user_type" enum:"Administrator,Staff,Customer"`
+	UserId   uint   `json:"user_id" gorm:"unique"`
 }
 
 func (user *UserResponse) ToTokenPayload() *TokenUserPayload {
@@ -61,5 +62,17 @@ func (userPayload TokenUserPayload) ConvertPayloadToUserResponse() *UserResponse
 		Name:     fmt.Sprintf("%s %s", userPayload.FirstName, userPayload.LastName),
 		Email:    userPayload.Email,
 		UserType: userPayload.UserType,
+		UserId:   uint(Id),
 	}
+}
+
+type FilterUser struct {
+	*PageFilter
+	Search   string `form:"search"`
+	UserType string `form:"user_type" enum:"Administrator,Staff"`
+}
+
+type UserListResponse struct {
+	Count   int            `json:"count"`
+	Results []UserResponse `json:"results"`
 }

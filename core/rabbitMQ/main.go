@@ -58,8 +58,8 @@ func (consumer Consumer) HandleMessage(message Payload) {
 	switch consumer.queue {
 	case "crm_queue":
 		switch message.DataType {
-		case "lead":
-			consumers.HandleLead(message.Action, message.Data)
+		case "user":
+			consumers.HandleUser(message.Action, message.Data)
 		}
 		println(fmt.Sprintf("[Y] %s", data))
 	default:

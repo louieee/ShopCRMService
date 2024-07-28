@@ -59,45 +59,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/login/": {
-            "post": {
-                "tags": [
-                    "auth"
-                ],
-                "summary": "allows a user to login",
-                "parameters": [
-                    {
-                        "description": "Login Credential",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.LoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/schemas.TokenResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.APIFailure"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/helpers.APIFailure"
-                        }
-                    }
-                }
-            }
-        },
         "/crm/companies": {
             "post": {
                 "produces": [
@@ -900,12 +861,43 @@ const docTemplate = `{
                 "tags": [
                     "users"
                 ],
-                "summary": "retrieves a user",
+                "summary": "retrieves all users",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "name": "page_size",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "user_type",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.BasicUserDataType"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/schemas.UserResponse"
+                            }
                         }
                     },
                     "400": {
@@ -921,29 +913,20 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
+            }
+        },
+        "/users/me": {
+            "get": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "users"
                 ],
-                "summary": "creates a user",
-                "parameters": [
-                    {
-                        "description": "user",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/schemas.CreateUserRequest"
-                        }
-                    }
-                ],
+                "summary": "retrieves a user",
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/schemas.UserResponse"
                         }
@@ -973,23 +956,6 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "integer"
-                }
-            }
-        },
-        "models.BasicUserDataType": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
                 }
             }
         },
@@ -1213,23 +1179,6 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.CreateUserRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
         "schemas.LeadResponse": {
             "type": "object",
             "properties": {
@@ -1289,17 +1238,6 @@ const docTemplate = `{
                 }
             }
         },
-        "schemas.LoginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
         "schemas.TokenResponse": {
             "type": "object",
             "properties": {
@@ -1323,7 +1261,10 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
-                "username": {
+                "user_id": {
+                    "type": "integer"
+                },
+                "user_type": {
                     "type": "string"
                 }
             }

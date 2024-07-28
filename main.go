@@ -87,22 +87,5 @@ func rabbitMQServer() {
 	server := rabbitMQ.RabbitMQServer
 	server = server.Connect(os.Getenv("RABBIT_MQ_HOST"), os.Getenv("REDIS_URL"))
 	println("connected to rabbit mq")
-
-	//task := rabbitMQ.Message{
-	//	Queue: "task_queue", Payload: rabbitMQ.Payload{
-	//		DataType: "Task",
-	//		Task: rabbitMQ.Task{
-	//			Function: "add",
-	//			Args:     []string{"1", "9"},
-	//		},
-	//	},
-	//}
-	//message := rabbitMQ.Message{
-	//	Queue: "message_queue", Payload: rabbitMQ.Payload{
-	//		DataType: "Message",
-	//		Msg:      "Hello Rabbit MQ Server",
-	//	},
-	//}
 	server.Consume()
-	//server.ChatConsume()
 }
