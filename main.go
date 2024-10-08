@@ -3,7 +3,9 @@ package main
 import (
 	"ShopService/core"
 	"ShopService/core/celery"
-	"ShopService/core/rabbitMQ"
+	"ShopService/core/rabbitmq"
+	"ShopService/core/rabbitmq/consumer"
+	"ShopService/core/rabbitmq/helpers"
 	_ "ShopService/docs"
 	"ShopService/routers"
 	"flag"
@@ -84,8 +86,11 @@ func rabbitMQServer() {
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
-	server := rabbitMQ.RabbitMQServer
+	server := rabbitmq.RabbitMQServer
 	server = server.Connect(os.Getenv("RABBIT_MQ_HOST"), os.Getenv("REDIS_URL"))
 	println("connected to rabbit mq")
-	server.Consume()
+	report_consumer :=  consumer.Consumer{}
+	report_consumer.SetQueue("report_queue")
+	fmt.Printf("Consumer queue: %s \n", report_consumer.GetQueue())
+	server.Consume([]helpers.Consumer{report_consumer})
 }

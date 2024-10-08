@@ -54,7 +54,7 @@ type Lead struct {
 	Budget           float64   `json:"budget"`
 	BudgetCurrency   string    `json:"budget_currency"`
 	IsDeal           bool      `json:"is_deal" default:"true"`
-	ConversionDate   time.Time `json:"conversion_date"`
+	ConversionDate   *time.Time `json:"conversion_date"`
 	CompanyID        int       `json:"company_id" validate:"gte=1" `
 	Company          Company   `json:"company"`
 }

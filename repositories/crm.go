@@ -1,12 +1,18 @@
 package repositories
 
 import (
+	"ShopService/core/rabbitmq"
+	"ShopService/core/rabbitmq/payloads"
 	"ShopService/helpers"
 	"ShopService/models"
 	"ShopService/schemas"
 	"fmt"
-	"github.com/jinzhu/gorm"
+	"os"
 	"strings"
+
+	"github.com/jinzhu/gorm"
+
+	RabbitMQHelpers "ShopService/core/rabbitmq/helpers"
 )
 
 /*
@@ -28,6 +34,29 @@ func CreateLead(db *gorm.DB, lead models.Lead) (*models.Lead, *helpers.CustomErr
 	if res.Error != nil {
 		return nil, helpers.ValidationError(res.Error.Error())
 	}
+	server := rabbitmq.RabbitMQServer
+	server = server.Connect(os.Getenv("RABBIT_MQ_HOST"), os.Getenv("REDIS_URL"))
+	lead_payload := payloads.LeadPayload{
+		Id:              int(lead.ID),
+		Title:           lead.Title,
+		ContactId:       int(lead.ContactID),
+		OwnerId:         int(lead.OwnerID),
+		Source:          lead.Source,
+		NurturingStatus: lead.NurturingStatus,
+		IsDeal:          lead.IsDeal,
+		Company:         lead.Company.Name,
+		ConversionDate:  lead.ConversionDate,
+	}
+	lead_payload_string := helpers.StructToString(lead_payload)
+	if lead_payload_string != nil {
+		payload := RabbitMQHelpers.Payload{
+			Action:   "create",
+			DataType: "lead",
+			Data:     *lead_payload_string,
+		}
+		server.Publish([]string{"report_queue"}, payload)
+	}
+
 	return &lead, nil
 }
 
@@ -145,19 +174,65 @@ func UpdateLead(db *gorm.DB, leadID uint, lead models.Lead) (*models.Lead, *help
 		return nil, helpers.ValidationError("A lead with this title already exists")
 	}
 	db.Model(&existingLead).Updates(lead)
+	server := rabbitmq.RabbitMQServer
+	server = server.Connect(os.Getenv("RABBIT_MQ_HOST"), os.Getenv("REDIS_URL"))
+	lead_payload := payloads.LeadPayload{
+		Id:              int(lead.ID),
+		Title:           lead.Title,
+		ContactId:       int(lead.ContactID),
+		OwnerId:         int(lead.OwnerID),
+		Source:          lead.Source,
+		NurturingStatus: lead.NurturingStatus,
+		IsDeal:          lead.IsDeal,
+		Company:         lead.Company.Name,
+		ConversionDate:  lead.ConversionDate,
+	}
+	lead_payload_string := helpers.StructToString(lead_payload)
+	if lead_payload_string != nil {
+		payload := RabbitMQHelpers.Payload{
+			Action:   "update",
+			DataType: "lead",
+			Data:     *lead_payload_string,
+		}
+		server.Publish([]string{"report_queue"}, payload)
+	}
+
 	return &existingLead, nil
 }
 
 func DeleteLead(db *gorm.DB, leadID uint) *helpers.CustomError {
-	var resCount int
-	db.Raw("select id from leads where id = ?", leadID).Count(&resCount)
-	if resCount == 0 {
+	lead_res, err := RetrieveLead(db, leadID)
+	lead := *lead_res
+	if err != nil {
 		return helpers.NotFoundError("This lead does not exist")
 	}
 	res := db.Exec("delete from leads where id = ?", leadID)
 	if res.Error != nil {
 		return helpers.ValidationError(res.Error.Error())
 	}
+	server := rabbitmq.RabbitMQServer
+	server = server.Connect(os.Getenv("RABBIT_MQ_HOST"), os.Getenv("REDIS_URL"))
+	lead_payload := payloads.LeadPayload{
+		Id:              int(leadID),
+		Title:           lead.Title,
+		ContactId:       int(lead.ContactID),
+		OwnerId:         int(lead.OwnerID),
+		Source:          lead.Source,
+		NurturingStatus: lead.NurturingStatus,
+		IsDeal:          lead.IsDeal,
+		Company:         lead.Company,
+		ConversionDate:  &lead.ConversionDate,
+	}
+	lead_payload_string := helpers.StructToString(lead_payload)
+	if lead_payload_string != nil {
+		payload := RabbitMQHelpers.Payload{
+			Action:   "delete",
+			DataType: "lead",
+			Data:     *lead_payload_string,
+		}
+		server.Publish([]string{"report_queue"}, payload)
+	}
+
 	return nil
 }
 
@@ -172,6 +247,26 @@ func CreateContact(db *gorm.DB, contact *models.Contact) (*models.Contact, *help
 	if res.Error != nil {
 		return nil, helpers.ValidationError(res.Error.Error())
 	}
+	server := rabbitmq.RabbitMQServer
+	server = server.Connect(os.Getenv("RABBIT_MQ_HOST"), os.Getenv("REDIS_URL"))
+	contact_payload := payloads.ContactPayload{
+		Id:              int(contact.ID),
+		OwnerId: int(contact.OwnerID),
+		Name: contact.Name,
+		Email: contact.Email,
+		PhoneNumber: contact.PhoneNumber,
+		Address: contact.Address,
+	}
+	contact_payload_string := helpers.StructToString(contact_payload)
+	if contact_payload_string != nil {
+		payload := RabbitMQHelpers.Payload{
+			Action:   "create",
+			DataType: "contact",
+			Data:     *contact_payload_string,
+		}
+		server.Publish([]string{"report_queue"}, payload)
+	}
+
 	return contact, nil
 }
 
@@ -234,18 +329,57 @@ func UpdateContact(db *gorm.DB, contactID uint, contact *models.Contact) (*model
 		return nil, helpers.NotFoundError("A contact with this name already exists")
 	}
 	db.Model(&existingContact).Updates(*contact)
+	server := rabbitmq.RabbitMQServer
+	server = server.Connect(os.Getenv("RABBIT_MQ_HOST"), os.Getenv("REDIS_URL"))
+	contact_obj := *contact
+	contact_payload := payloads.ContactPayload{
+		Id:              int(contact_obj.ID),
+		OwnerId: int(contact_obj.OwnerID),
+		Name: contact_obj.Name,
+		Email: contact_obj.Email,
+		PhoneNumber: contact_obj.PhoneNumber,
+		Address: contact_obj.Address,
+	}
+	contact_payload_string := helpers.StructToString(contact_payload)
+	if contact_payload_string != nil {
+		payload := RabbitMQHelpers.Payload{
+			Action:   "update",
+			DataType: "contact",
+			Data:     *contact_payload_string,
+		}
+		server.Publish([]string{"report_queue"}, payload)
+	}
 	return &existingContact, nil
 }
 
 func DeleteContact(db *gorm.DB, contactID uint) *helpers.CustomError {
-	var resCount int
-	db.Raw("select id from contacts where id = ?", contactID).Count(&resCount)
-	if resCount == 0 {
+	contact_res, err := RetrieveContact(db, contactID)
+	contact :=  *contact_res
+	if err != nil {
 		return helpers.NotFoundError("This contact does not exist")
 	}
 	res := db.Exec("delete from contacts where id = ?", contactID)
 	if res.Error != nil {
 		return helpers.ValidationError(res.Error.Error())
+	}
+	server := rabbitmq.RabbitMQServer
+	server = server.Connect(os.Getenv("RABBIT_MQ_HOST"), os.Getenv("REDIS_URL"))
+	contact_payload := payloads.ContactPayload{
+		Id:              int(contact.ID),
+		OwnerId: int(contact.OwnerID),
+		Name: contact.Name,
+		Email: contact.Email,
+		PhoneNumber: contact.PhoneNumber,
+		Address: contact.Address,
+	}
+	contact_payload_string := helpers.StructToString(contact_payload)
+	if contact_payload_string != nil {
+		payload := RabbitMQHelpers.Payload{
+			Action:   "delete",
+			DataType: "contact",
+			Data:     *contact_payload_string,
+		}
+		server.Publish([]string{"report_queue"}, payload)
 	}
 	return nil
 }
@@ -327,12 +461,11 @@ func UpdateCompany(db *gorm.DB, companyID uint, company models.Company) (*models
 
 func DeleteCompany(db *gorm.DB, companyID uint) *helpers.CustomError {
 	var query struct{ Count int }
-	res := db.Raw("select count(*) from companies where id=?;", companyID).Find(&query)
-	println("count: ", query.Count)
+	db.Raw("select count(*) from companies where id=?;", companyID).Find(&query)
 	if query.Count == 0 {
 		return helpers.NotFoundError("This company does not exist")
 	}
-	res = db.Exec("delete from companies where id=?;", companyID)
+	res := db.Exec("delete from companies where id=?;", companyID)
 	if res.Error != nil {
 		return helpers.ValidationError(res.Error.Error())
 	}
